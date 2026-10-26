@@ -12,7 +12,7 @@
 // KV binding:
 //   JOBS                برای دکمهٔ «یک نسخهٔ دیگر»
 
-const REPO = 'Terlinart/hasibi-content-render';
+const REPO = 'Terlinart/Hasibi-content-render';
 const MODELS = ['gemini-3.8-flash', 'gemini-flash-lite-latest', 'gemini-flash-latest'];
 
 export default {

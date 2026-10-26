@@ -217,7 +217,7 @@ const dispatchNew = node({
     name: 'Start Render (GitHub)',
     parameters: {
       method: 'POST',
-      url: 'https://api.github.com/repos/Terlinart/hasibi-content-render/dispatches',
+      url: 'https://api.github.com/repos/Terlinart/Hasibi-content-render/dispatches',
       authentication: 'genericCredentialType',
       genericAuthType: 'httpTemplatedCustomAuth',
       sendHeaders: true,
@@ -332,7 +332,7 @@ const dispatchAgain = node({
     name: 'Start Re-render (GitHub)',
     parameters: {
       method: 'POST',
-      url: 'https://api.github.com/repos/Terlinart/hasibi-content-render/dispatches',
+      url: 'https://api.github.com/repos/Terlinart/Hasibi-content-render/dispatches',
       authentication: 'genericCredentialType',
       genericAuthType: 'httpTemplatedCustomAuth',
       sendHeaders: true,
