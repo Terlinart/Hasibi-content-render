@@ -1,0 +1,84 @@
+name: render-content
+
+# n8n این را با repository_dispatch صدا می‌زند:
+# client_payload = { chat_id, file_id, caption, job: {...ContentProps} }
+on:
+  repository_dispatch:
+    types: [render]
+  workflow_dispatch: # تست دستی با نمونهٔ مگنی‌فورت (بدون تلگرام)
+
+concurrency:
+  group: render-${{ github.event.client_payload.chat_id || 'manual' }}
+  cancel-in-progress: false
+
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      TG: https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}
+      CHAT_ID: ${{ github.event.client_payload.chat_id }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install
+        run: |
+          npm ci
+          pip install --quiet edge-tts numpy pillow
+          sudo apt-get install -y --no-install-recommends ffmpeg fonts-noto-color-emoji >/dev/null
+
+      - name: Write job + fetch photo
+        env:
+          PAYLOAD: ${{ toJson(github.event.client_payload) }}
+        run: |
+          mkdir -p public/job out
+          if [ -z "$CHAT_ID" ]; then
+            cp job.sample.json job.json
+            echo "نمونهٔ تست — بدون ارسال به تلگرام" > out/caption.txt
+            exit 0
+          fi
+          echo "$PAYLOAD" > payload.json
+          FILE_ID=$(jq -r .file_id payload.json)
+          FPATH=$(curl -s "$TG/getFile?file_id=$FILE_ID" | jq -r .result.file_path)
+          curl -s -o public/job/raw "https://api.telegram.org/file/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/$FPATH"
+          python3 scripts/prep_image.py public/job/raw public/job/product.jpg
+          jq '.job + {imageSrc: "job/product.jpg"}' payload.json > job.json
+          jq -r .caption payload.json > out/caption.txt
+          cat job.json
+
+      - name: Render post, stories, reel
+        run: node scripts/render.mjs job.json out
+
+      - name: Voice, music, sound effects
+        run: python3 scripts/audio.py job.json out/reel_silent.mp4 out/reel.mp4
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: content-${{ github.run_id }}
+          path: |
+            out/*.png
+            out/reel.mp4
+            out/caption.txt
+          retention-days: 7
+
+      - name: Send to Telegram
+        if: ${{ env.CHAT_ID != '' }}
+        run: |
+          curl -s -F chat_id=$CHAT_ID -F video=@out/reel.mp4 -F supports_streaming=true \
+            -F caption="🎬 ریلز (۱۰۸۰×۱۹۲۰)" "$TG/sendVideo" > /dev/null
+          curl -s -F chat_id=$CHAT_ID \
+            -F media='[{"type":"document","media":"attach://p"},{"type":"document","media":"attach://s1"},{"type":"document","media":"attach://s2","caption":"🖼 پست ۱۰۸۰×۱۳۵۰ + ۲ استوری ۱۰۸۰×۱۹۲۰ (فایل با کیفیت کامل)"}]' \
+            -F p=@out/post.png -F s1=@out/story1.png -F s2=@out/story2.png "$TG/sendMediaGroup" > /dev/null
+          jq -n --arg c "$CHAT_ID" --rawfile t out/caption.txt \
+            '{chat_id:$c, text:("📝 کپشن آماده:\n\n"+$t), reply_markup:{inline_keyboard:[[{text:"🔁 یک نسخهٔ دیگر بساز",callback_data:"regen"}]]}}' \
+            | curl -s -H 'Content-Type: application/json' -d @- "$TG/sendMessage" > /dev/null
+
+      - name: Report failure
+        if: ${{ failure() && env.CHAT_ID != '' }}
+        run: |
+          curl -s -d chat_id=$CHAT_ID --data-urlencode text="⚠️ ساخت محتوا ناموفق بود. دوباره عکس را بفرستید؛ اگر باز تکرار شد به ترلین خبر بدهید." "$TG/sendMessage" > /dev/null
