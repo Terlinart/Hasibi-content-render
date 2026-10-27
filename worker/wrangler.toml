@@ -1,0 +1,12 @@
+# ربات تلگرام داروخانه روی Cloudflare Workers (رایگان)
+name = "hasibi-content-bot"
+main = "worker.js"
+compatibility_date = "2026-10-01"
+
+[vars]
+# آیدی‌های مجاز تلگرام: ترلین، دکتر حصیبی
+ALLOWED_USER_IDS = "336633779,96650098"
+
+# برای دکمهٔ «یک نسخهٔ دیگر» — Cloudflare خودش موقع اولین deploy می‌سازد
+[[kv_namespaces]]
+binding = "JOBS"
