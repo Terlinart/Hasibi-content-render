@@ -55,7 +55,7 @@ jobs:
         run: node scripts/render.mjs job.json out
 
       - name: Music + sound effects
-        run: python3 scripts/audio.py job.json out/reel_silent.mp4 out/reel.mp4
+        run: python3 scripts/audio.py job.json out/reel_silent.mp4 out/reel.mp4 out/plan.json
 
       - uses: actions/upload-artifact@v4
         with:

@@ -15,8 +15,12 @@ const serveUrl = await bundle({entryPoint: path.resolve('src/index.ts')});
 for (const id of only) {
   const composition = await selectComposition({serveUrl, id, inputProps: props, browserExecutable});
   if (id === 'Reel') {
+    // نقشهٔ ریلز (صحنه‌ها + زمان افکت‌ها) برای scripts/audio.py
+    const plan = composition.props.plan;
+    fs.writeFileSync(path.join(outDir, 'plan.json'), JSON.stringify(plan, null, 1));
+    console.log('plan:', plan.segments.map((s) => `${s.type}(${s.transition})`).join(' → '), `| ${plan.total}f`, `| ${plan.overlay}`);
     await renderMedia({
-      composition, serveUrl, codec: 'h264', inputProps: props, browserExecutable,
+      composition, serveUrl, codec: 'h264', inputProps: composition.props, browserExecutable,
       outputLocation: path.join(outDir, 'reel_silent.mp4'), crf: 18, x264Preset: 'veryfast', concurrency: process.env.CONCURRENCY ? Number(process.env.CONCURRENCY) : null,
     });
   } else {

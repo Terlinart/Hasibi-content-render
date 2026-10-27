@@ -3,8 +3,9 @@ export const BRAND = {
   blue: '#1676D2',
   green: '#2F9E4F',
   white: '#FFFFFF',
-  navy: '#0B2447',
-  navyDeep: '#06162E',
+  navy: '#0E2A54',
+  navyDeep: '#071935',
+  lightBlue: '#CFE3F8',
   ink: '#10233F',
   name: 'داروخانه دکتر حصیبی',
   address: 'کرمان، کوهپایه',
@@ -48,7 +49,10 @@ export const ACCENTS = [
   {a: BRAND.green, b: BRAND.blue, glow: '#7BE3A0'},
   {a: '#1E88E5', b: '#26A69A', glow: '#80DEEA'},
   {a: '#1565C0', b: '#43A047', glow: '#B3E5FC'},
+  {a: BRAND.navy, b: BRAND.green, glow: '#8FC2F5'},
+  {a: '#0F8C6B', b: BRAND.blue, glow: '#9BF0D2'},
 ];
+export type Accent = (typeof ACCENTS)[number];
 
 export const pick = <T,>(arr: T[], seed: number, salt = 0): T =>
   arr[Math.abs(Math.floor(seed * 7919 + salt * 104729)) % arr.length];

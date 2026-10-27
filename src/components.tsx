@@ -11,6 +11,8 @@ const FONTS: [string, string, string][] = [
   ['Vazirmatn', 'fonts/vazirmatn-arabic-700-normal.woff2', '700'],
   ['Vazirmatn', 'fonts/vazirmatn-arabic-900-normal.woff2', '900'],
   ['Lalezar', 'fonts/lalezar-arabic-400-normal.woff2', '400'],
+  ['Poppins', 'fonts/poppins-latin-600-normal.woff2', '600'],
+  ['Poppins', 'fonts/poppins-latin-700-normal.woff2', '700'],
 ];
 let fontsReady: Promise<void> | null = null;
 export const useFonts = () => {
@@ -37,55 +39,58 @@ export const base: React.CSSProperties = {
 };
 export const display: React.CSSProperties = {fontFamily: 'Lalezar, Vazirmatn, sans-serif', fontWeight: 400, direction: 'rtl'};
 
-// لوگو: «ح» + علامت به‌علاوه + برگ، روی دیسک سفید در قاب سرمه‌ای با حس پرس‌شده
-export const Logo: React.FC<{size: number}> = ({size}) => (
-  <div
-    style={{
-      width: size,
-      height: size,
-      borderRadius: '50%',
-      background: `radial-gradient(circle at 35% 30%, #16346A, ${BRAND.navy} 60%, ${BRAND.navyDeep})`,
-      boxShadow: 'inset 0 4px 10px rgba(255,255,255,.18), inset 0 -6px 14px rgba(0,0,0,.55), 0 10px 30px rgba(0,0,0,.35)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      flexShrink: 0,
-    }}
-  >
-    <svg width={size * 0.8} height={size * 0.8} viewBox="0 0 100 100">
-      <defs>
-        <radialGradient id="disc" cx="40%" cy="35%">
-          <stop offset="0" stopColor="#FFFFFF" />
-          <stop offset="1" stopColor="#E3ECF5" />
-        </radialGradient>
-        <filter id="deboss">
-          <feOffset dx="0" dy="1.4" />
-          <feGaussianBlur stdDeviation="0.9" result="o" />
-          <feComposite in="SourceGraphic" in2="o" operator="over" />
-        </filter>
-      </defs>
-      <circle cx="50" cy="50" r="48" fill="url(#disc)" />
-      <circle cx="50" cy="50" r="48" fill="none" stroke="rgba(11,36,71,.25)" strokeWidth="1.5" />
-      <text
-        x="47"
-        y="66"
-        textAnchor="middle"
-        fontFamily="Lalezar, Vazirmatn"
-        fontSize="56"
-        fill={BRAND.blue}
-        filter="url(#deboss)"
-      >
-        ح
-      </text>
-      {/* به‌علاوه */}
-      <rect x="66" y="20" width="16" height="5" rx="1.5" fill={BRAND.green} />
-      <rect x="71.5" y="14.5" width="5" height="16" rx="1.5" fill={BRAND.green} />
-      {/* برگ */}
-      <path d="M24 30 C 22 18, 34 12, 42 14 C 42 24, 34 32, 24 30 Z" fill={BRAND.green} />
-      <path d="M26 28 L 40 16" stroke="#fff" strokeWidth="1.2" />
-    </svg>
-  </div>
+// لوگوی DrHasibi Pharmacy — بازسازی برداری دقیق از فایل public/brand/logo-original.png
+// دو قرص عمودی (آبی/آبی‌روشن و آبی‌روشن/سرمه‌ای) + صلیب سبز = حرف H
+export const LogoMarkPaths: React.FC = () => (
+  <g>
+    <defs>
+      <clipPath id="lgL"><rect x="406" y="318" width="87" height="313" rx="43.5" /></clipPath>
+      <clipPath id="lgR"><rect x="586" y="318" width="87" height="313" rx="43.5" /></clipPath>
+    </defs>
+    <g clipPath="url(#lgL)">
+      <rect x="406" y="318" width="87" height="157" fill={BRAND.blue} />
+      <rect x="406" y="475" width="87" height="156" fill={BRAND.lightBlue} />
+    </g>
+    <g clipPath="url(#lgR)">
+      <rect x="586" y="318" width="87" height="157" fill={BRAND.lightBlue} />
+      <rect x="586" y="475" width="87" height="156" fill={BRAND.navy} />
+    </g>
+    <rect x="464" y="442" width="152" height="66" rx="33" fill={BRAND.green} />
+    <rect x="517" y="403" width="46" height="144" rx="23" fill={BRAND.green} />
+  </g>
 );
+
+// فقط نشانهٔ H (بدون دایره و متن)
+export const LogoMark: React.FC<{size: number; style?: React.CSSProperties}> = ({size, style}) => (
+  <svg width={size * (280 / 326)} height={size} viewBox="400 312 280 326" style={style}>
+    <LogoMarkPaths />
+  </svg>
+);
+
+// لوگوی کامل: دیسک سفید + حلقهٔ سرمه‌ای + H؛ در اندازهٔ بزرگ، متن DrHasibi PHARMACY هم می‌آید
+export const Logo: React.FC<{size: number; text?: boolean; ring?: boolean}> = ({size, text, ring = true}) => {
+  const withText = text ?? size >= 170;
+  return (
+    <svg width={size} height={size} viewBox="28 28 1024 1024" style={{flexShrink: 0, direction: 'ltr', filter: 'drop-shadow(0 10px 24px rgba(7,25,53,.28))'}}>
+      <circle cx="540" cy="540" r="498" fill="#fff" />
+      {ring && <circle cx="540" cy="540" r="485" fill="none" stroke={BRAND.navy} strokeWidth="27" />}
+      <g transform={withText ? undefined : 'translate(540 540) scale(1.75) translate(-539.5 -474.5)'}>
+        <LogoMarkPaths />
+      </g>
+      {withText && (
+        <>
+          <text x="369" y="757" fontFamily="Poppins" fontWeight={700} fontSize="80" textLength="343" lengthAdjust="spacingAndGlyphs">
+            <tspan fill={BRAND.navy}>Dr</tspan>
+            <tspan fill={BRAND.blue}>Hasibi</tspan>
+          </text>
+          <text x="421" y="811" fontFamily="Poppins" fontWeight={600} fontSize="27" fill={BRAND.green} textLength="233" lengthAdjust="spacing">
+            PHARMACY
+          </text>
+        </>
+      )}
+    </svg>
+  );
+};
 
 // قاب سرمه‌ای با بافت پرس‌شده دور کل کادر
 export const NavyFrame: React.FC<{thickness?: number; children: React.ReactNode; bg?: string}> = ({

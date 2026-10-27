@@ -1,6 +1,7 @@
 """صدای ریلز: افکت‌های زیاد هماهنگ با هر حرکت روی تصویر + موزیک خیلی آرام در پس‌زمینه (بدون گوینده).
 موزیک با کد ساخته می‌شود، پس هیچ مشکل کپی‌رایتی ندارد و هر ویدیو (با seed) ریتم و آکورد خودش را دارد.
-استفاده: python3 scripts/audio.py job.json out/reel_silent.mp4 out/reel.mp4
+استفاده: python3 scripts/audio.py job.json out/reel_silent.mp4 out/reel.mp4 out/plan.json
+زمان هر افکت از plan.json می‌آید (همان نقشه‌ای که تصویر با آن ساخته شده).
 """
 import json
 import math
@@ -13,13 +14,11 @@ import numpy as np
 
 SR = 44100
 FPS = 30
-# باید با SCENE_LEN در src/Reel.tsx یکی باشد
-SCENES = {"hook": 54, "glass": 120, "neon": 150, "poster": 96, "outro": 120}
-TOTAL = sum(SCENES.values()) / FPS
-
-job_path, video_in, video_out = sys.argv[1:4]
+job_path, video_in, video_out, plan_path = sys.argv[1:5]
 job = json.load(open(job_path, encoding="utf-8"))
-seed = int(job.get("seed", 1))
+plan = json.load(open(plan_path, encoding="utf-8"))
+seed = int(plan.get("seed", job.get("seed", 1)))
+TOTAL = plan["total"] / FPS
 rng = random.Random(seed)
 
 # ---------- موزیک ----------
@@ -32,7 +31,7 @@ def env(n, a=0.005, r=0.3):
 def music(total_s: float) -> np.ndarray:
     n = int(total_s * SR)
     out = np.zeros(n, dtype=np.float32)
-    bpm = rng.choice([100, 104, 108, 112, 116, 120])
+    bpm = plan["bpm"]  # همان ضرب‌آهنگی که تپش تصویر با آن هماهنگ است
     beat = 60 / bpm
     root = rng.choice([45, 47, 48, 50, 52, 53])  # midi
     progs = [[0, 5, 3, 4], [0, 3, 5, 4], [0, 4, 5, 3], [5, 3, 0, 4]]
@@ -188,44 +187,20 @@ def main():
     fx = np.zeros(n, dtype=np.float32)
     F = 1 / FPS
 
-    order = ["hook"] + [["glass", "neon", "poster"], ["neon", "glass", "poster"], ["glass", "poster", "neon"]][abs(seed) % 3] + ["outro"]
-    cut_fx = [boom, glitch, lambda: whoosh(0.45, True), zap]
-    rng.shuffle(cut_fx)
-    t0 = 0.0
-    for si, k in enumerate(order):
-        # برش صحنه (فلش + پانچ زوم)
-        if si == 0:
-            place(fx, boom(), 0.0, 0.9)
-        else:
-            place(fx, riser(0.6), t0 - 0.6, 0.35)
-            place(fx, cut_fx[si % len(cut_fx)](), t0, 0.8)
-
-        if k == "hook":
-            words = str(job.get("hook", "")).split()
-            for i in range(len(words)):
-                place(fx, pop(), t0 + (4 + i * 4) * F, 0.75)
-            place(fx, ding(), t0 + 10 * F, 0.35)  # لوگو
-        elif k == "glass":
-            place(fx, whoosh(0.5, False), t0, 0.5)  # کارت بالا می‌آید
-            place(fx, shimmer(1.6), t0 + 10 * F, 0.45)  # نور روی شیشه
-            place(fx, click(), t0 + 22 * F, 0.6)  # چیپ
-        elif k == "neon":
-            for i, _ in enumerate(job.get("ingredients", [])[:4]):
-                place(fx, zap(), t0 + (10 + i * 14) * F, 0.6)
-                place(fx, click(), t0 + (14 + i * 14) * F, 0.35)
-            for i, _ in enumerate(job.get("badges", [])[:3]):
-                place(fx, pop(), t0 + (82 + i * 5) * F, 0.5)
-        elif k == "poster":
-            place(fx, whoosh(0.35, True), t0, 0.6)  # برش مورب
-            place(fx, boom(), t0 + 6 * F, 0.7)  # اسم محصول
-            place(fx, click(), t0 + 22 * F, 0.5)
-        elif k == "outro":
-            place(fx, riser(0.5), t0, 0.4)  # چرخش لوگو
-            place(fx, boom(), t0 + 14 * F, 0.6)
-            place(fx, shutter(), t0 + 20 * F, 0.6)  # QR
-            place(fx, ding(), t0 + 28 * F, 0.4)
-            place(fx, shimmer(1.2), t0 + 30 * F, 0.3)
-        t0 += SCENES[k] / FPS
+    gens = {
+        "boom": boom, "pop": pop, "click": click, "tick": click, "zap": zap, "glitch": glitch,
+        "ding": ding, "shutter": shutter,
+        "whoosh": lambda d: whoosh(d or 0.4, True), "whoosh_down": lambda d: whoosh(d or 0.45, False),
+        "riser": lambda d: riser(d or 0.8), "shimmer": lambda d: shimmer(d or 0.9),
+    }
+    takes_d = {"whoosh", "whoosh_down", "riser", "shimmer"}
+    for c in plan["cues"]:
+        fn = gens.get(c["fx"])
+        if not fn:
+            continue
+        clip = fn(c.get("d")) if c["fx"] in takes_d else fn()
+        g = c["g"] * (0.55 if c["fx"] == "tick" else 1.0)
+        place(fx, clip, c["f"] / FPS, g)
 
     mix = mix / (np.max(np.abs(mix)) + 1e-9) * 0.18 + fx * 0.85
     mix = np.tanh(mix * 2.6)  # لیمیتر نرم تا افکت‌ها پرقدرت و بدون خش باشند
