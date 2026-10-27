@@ -1,5 +1,5 @@
 # ربات تلگرام داروخانه روی Cloudflare Workers (رایگان)
-name = "hasibi-content-bot"
+name = "hasibi-content-render"
 main = "worker.js"
 compatibility_date = "2026-10-01"
 
