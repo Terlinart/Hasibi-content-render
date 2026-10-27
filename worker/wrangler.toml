@@ -12,3 +12,7 @@ ALLOWED_USER_IDS = "336633779,96650098"
 # برای دکمهٔ «یک نسخهٔ دیگر» — Cloudflare خودش موقع اولین deploy می‌سازد
 [[kv_namespaces]]
 binding = "JOBS"
+
+# قبل از هر deploy، Secretهای بخش Build را روی Worker می‌گذارد
+[build]
+command = "node push-secrets.mjs"
