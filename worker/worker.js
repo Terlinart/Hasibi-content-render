@@ -21,19 +21,35 @@ export default {
 
     // یک‌بار بعد از نصب: https://<worker>/setup?key=<WEBHOOK_SECRET>
     if (url.pathname === '/setup') {
-      if (url.searchParams.get('key') !== env.WEBHOOK_SECRET) return new Response('forbidden', { status: 403 });
+      if (!env.WEBHOOK_SECRET) return new Response('WEBHOOK_SECRET is not set in Cloudflare', { status: 500 });
+      if ((url.searchParams.get('key') || '').trim() !== String(env.WEBHOOK_SECRET).trim()) return new Response('forbidden: key does not match WEBHOOK_SECRET', { status: 403 });
       const hook = `${url.origin}/telegram`;
       const r = await tg(env, 'setWebhook', {
         url: hook,
-        secret_token: env.WEBHOOK_SECRET,
+        secret_token: String(env.WEBHOOK_SECRET).trim(),
         allowed_updates: ['message', 'callback_query'],
         drop_pending_updates: true,
       });
       return json(r);
     }
 
+    // فقط می‌گوید کدام تنظیمات وجود دارد (مقدارها هرگز نمایش داده نمی‌شوند)
+    if (url.pathname === '/health') {
+      const has = (k) => (env[k] ? 'OK' : 'MISSING');
+      return json({
+        TELEGRAM_BOT_TOKEN: has('TELEGRAM_BOT_TOKEN'),
+        GEMINI_API_KEY: has('GEMINI_API_KEY'),
+        GITHUB_TOKEN: has('GITHUB_TOKEN'),
+        WEBHOOK_SECRET: has('WEBHOOK_SECRET'),
+        WEBHOOK_SECRET_length: String(env.WEBHOOK_SECRET || '').length,
+        WEBHOOK_SECRET_has_spaces: /\s/.test(String(env.WEBHOOK_SECRET || '')),
+        ALLOWED_USER_IDS: has('ALLOWED_USER_IDS'),
+        JOBS: env.JOBS ? 'OK' : 'MISSING',
+      });
+    }
+
     if (url.pathname === '/telegram' && request.method === 'POST') {
-      if (request.headers.get('X-Telegram-Bot-Api-Secret-Token') !== env.WEBHOOK_SECRET) {
+      if (request.headers.get('X-Telegram-Bot-Api-Secret-Token') !== String(env.WEBHOOK_SECRET || '').trim()) {
         return new Response('forbidden', { status: 403 });
       }
       const update = await request.json();

@@ -2,6 +2,8 @@
 name = "hasibi-content-render"
 main = "worker.js"
 compatibility_date = "2026-10-01"
+# مقدارهایی که در داشبورد Cloudflare گذاشته شده با deploy بعدی پاک نشوند
+keep_vars = true
 
 [vars]
 # آیدی‌های مجاز تلگرام: ترلین، دکتر حصیبی
