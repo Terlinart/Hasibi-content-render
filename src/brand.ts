@@ -12,7 +12,6 @@ export const BRAND = {
   hours: 'هر روز ۹ تا ۲۱',
   instagram: 'drhasibi_pharmacy',
   instagramUrl: 'https://instagram.com/drhasibi_pharmacy',
-  greeting: 'سلام کوه‌پایه!',
   consult: 'سؤال دارویی؟ با دکتر حصیبی مشورت کنید',
 };
 

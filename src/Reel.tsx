@@ -40,7 +40,6 @@ const Hook: React.FC<{p: ContentProps; ac: Ac}> = ({p, ac}) => {
           transform: `translateX(${-f * 6}px)`,
         }}
       />
-      <div style={{...display, fontSize: 70, color: '#fff', opacity: clampI(f, [0, 6], [0, 1])}}>{BRAND.greeting}</div>
       <div style={{display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: 24, direction: 'rtl', padding: '0 60px'}}>
         {words.map((w, i) => {
           const ws = spring({frame: f - 4 - i * 4, fps, config: {damping: 10, stiffness: 220}});

@@ -72,8 +72,7 @@ export const Story1: React.FC<ContentProps> = (p) => {
     <NavyFrame bg={`linear-gradient(170deg, #FFFFFF 0%, #EAF3FC 55%, ${ac.glow}55 100%)`}>
       <AbsoluteFill style={{padding: '90px 64px', display: 'flex', flexDirection: 'column', alignItems: 'center'}}>
         <Header />
-        <div style={{...display, fontSize: 92, color: ac.a, marginTop: 70}}>{BRAND.greeting}</div>
-        <div style={{...base, fontSize: 52, fontWeight: 900, color: BRAND.navy, marginTop: 6}}>{p.hook}</div>
+        <div style={{...display, fontSize: 92, color: ac.a, marginTop: 70}}>{p.hook}</div>
         <div style={{position: 'relative', height: 860, display: 'flex', alignItems: 'center', justifyContent: 'center', marginTop: 20}}>
           <div style={{position: 'absolute', width: 760, height: 760, borderRadius: '50%', background: `radial-gradient(circle, ${ac.glow}66, transparent 66%)`}} />
           <ProductImage src={p.imageSrc} height={780} />

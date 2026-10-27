@@ -29,7 +29,7 @@ jobs:
       - name: Install
         run: |
           npm ci
-          pip install --quiet edge-tts numpy pillow
+          pip install --quiet numpy pillow
           sudo apt-get install -y --no-install-recommends ffmpeg fonts-noto-color-emoji >/dev/null
 
       - name: Write job + fetch photo
@@ -54,7 +54,7 @@ jobs:
       - name: Render post, stories, reel
         run: node scripts/render.mjs job.json out
 
-      - name: Voice, music, sound effects
+      - name: Music + sound effects
         run: python3 scripts/audio.py job.json out/reel_silent.mp4 out/reel.mp4
 
       - uses: actions/upload-artifact@v4

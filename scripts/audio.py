@@ -1,8 +1,7 @@
-"""صدای ریلز: گویندهٔ فارسی (Edge TTS رایگان) + موزیک ساخته‌شده با کد + افکت روی هر برش.
+"""صدای ریلز: فقط موزیک ساخته‌شده با کد + افکت روی هر برش (بدون گوینده).
 موزیک با کد ساخته می‌شود، پس هیچ مشکل کپی‌رایتی ندارد و هر ویدیو (با seed) ریتم و آکورد خودش را دارد.
 استفاده: python3 scripts/audio.py job.json out/reel_silent.mp4 out/reel.mp4
 """
-import asyncio
 import json
 import math
 import random
@@ -22,47 +21,6 @@ job_path, video_in, video_out = sys.argv[1:4]
 job = json.load(open(job_path, encoding="utf-8"))
 seed = int(job.get("seed", 1))
 rng = random.Random(seed)
-
-# ---------- متن گوینده: از فیلدهای تأییدشده ساخته می‌شود، نه آزاد ----------
-LAT = {"A": "اِی", "B": "بی", "C": "سی", "D": "دی", "E": "ای", "K": "کا", "Q": "کیو", "Z": "زد"}
-NUM = {"1": "یک", "2": "دو", "3": "سه", "6": "شش", "7": "هفت", "9": "نه", "12": "دوازده"}
-
-
-def speakable(t: str) -> str:
-    import re
-
-    t = re.sub(r"\b([A-Z])(\d{1,2})\b", lambda m: f"{LAT.get(m.group(1), m.group(1))} {NUM.get(m.group(2), m.group(2))}", t)
-    return t
-
-
-def voiceover_text(j: dict) -> str:
-    ing = "، ".join(j["ingredients"][:4])
-    return speakable(
-        f"سلام کوه‌پایه! {j['hook']} "
-        f"{j['productFa']}، {j['category']}. "
-        f"روی جعبه‌اش نوشته: {j['boxClaim']}. "
-        f"ترکیبات روی جعبه: {ing}. "
-        f"برای مشاوره با دکتر حصیبی تماس بگیرید. داروخانه دکتر حصیبی، کرمان، کوهپایه."
-    )
-
-
-VOICES = ["fa-IR-DilaraNeural", "fa-IR-FaridNeural"]
-
-
-async def tts(text: str, path: str):
-    import edge_tts
-
-    voice = VOICES[seed % len(VOICES)]
-    await edge_tts.Communicate(text, voice, rate="+12%").save(path)
-
-
-def load_wav_mono(path: str) -> np.ndarray:
-    raw = subprocess.run(
-        ["ffmpeg", "-v", "error", "-i", path, "-f", "f32le", "-ac", "1", "-ar", str(SR), "-"],
-        check=True, capture_output=True,
-    ).stdout
-    return np.frombuffer(raw, dtype=np.float32).copy()
-
 
 # ---------- موزیک ----------
 def env(n, a=0.005, r=0.3):
@@ -160,29 +118,6 @@ def main():
     n = int(total * SR)
     mix = music(total)
 
-    # گوینده
-    voice = np.zeros(0, dtype=np.float32)
-    try:
-        asyncio.run(tts(job.get("voiceover") or voiceover_text(job), "/tmp/vo.mp3"))
-        voice = load_wav_mono("/tmp/vo.mp3")
-    except Exception as e:  # بدون اینترنت/سرویس: ویدیو بدون گوینده ساخته می‌شود
-        print("TTS skipped:", e)
-    if len(voice):
-        max_len = (total - 1.0) * SR
-        if len(voice) > max_len:  # اگر بلند بود کمی تندترش کن
-            factor = len(voice) / max_len
-            subprocess.run(
-                ["ffmpeg", "-v", "error", "-y", "-i", "/tmp/vo.mp3", "-filter:a", f"atempo={min(factor, 1.6):.3f}", "/tmp/vo2.wav"],
-                check=True,
-            )
-            voice = load_wav_mono("/tmp/vo2.wav")[: int(max_len)]
-        voice = voice / (np.max(np.abs(voice)) + 1e-9) * 0.9
-        # داکینگ: موزیک زیر صدا آرام شود
-        vbuf = np.zeros(n, dtype=np.float32)
-        place(vbuf, voice, 0.35, 1.0)
-        envv = np.convolve(np.abs(vbuf), np.ones(4410) / 4410, mode="same")
-        duck = 1 - 0.65 * np.clip(envv / 0.08, 0, 1)
-        mix = mix * duck + vbuf
 
     # افکت‌ها: هر برش صحنه یک افکت متفاوت
     order = ["hook"] + [["glass", "neon", "poster"], ["neon", "glass", "poster"], ["glass", "poster", "neon"]][abs(seed) % 3] + ["outro"]
@@ -214,7 +149,7 @@ def main():
          "-c:v", "copy", "-c:a", "aac", "-b:a", "192k", "-ac", "2", "-shortest", "-movflags", "+faststart", video_out],
         check=True,
     )
-    print("audio mixed ->", video_out, "| voice:", "yes" if len(voice) else "no")
+    print("audio mixed ->", video_out)
 
 
 main()

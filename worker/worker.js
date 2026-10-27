@@ -111,7 +111,7 @@ async function regen(env, chatId) {
   await env.JOBS.put(`last:${chatId}`, JSON.stringify(p));
   const ok = await dispatch(env, p);
   return send(env, chatId, ok
-    ? '🔁 نسخهٔ جدید با رنگ، ترتیب صحنه، صدا و موزیک متفاوت در حال ساخت است (حدود ۵ دقیقه).'
+    ? '🔁 نسخهٔ جدید با رنگ، ترتیب صحنه، موزیک و افکت متفاوت در حال ساخت است (حدود ۵ دقیقه).'
     : '⚠️ ارسال به موتور ساخت ویدیو ناموفق بود. چند دقیقهٔ دیگر دوباره امتحان کنید.');
 }
 

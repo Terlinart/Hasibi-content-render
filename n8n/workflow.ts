@@ -302,7 +302,7 @@ const hooks = [last.job.category + ' جدید رسید!', 'تازه رسید!', 
 last.job.seed = (last.job.seed || 1) + 1;
 last.job.hook = hooks[last.job.seed % hooks.length];
 st.jobs[src.chatId] = last;
-return [{ json: { ok: true, chatId: src.chatId, fileId: last.fileId, job: last.job, caption: last.caption, report: '🔁 نسخهٔ جدید با رنگ، ترتیب صحنه، صدا و موزیک متفاوت در حال ساخت است (حدود ۵ دقیقه).' } }];`
+return [{ json: { ok: true, chatId: src.chatId, fileId: last.fileId, job: last.job, caption: last.caption, report: '🔁 نسخهٔ جدید با رنگ، ترتیب صحنه، موزیک و افکت متفاوت در حال ساخت است (حدود ۵ دقیقه).' } }];`
     },
     position: [920, 520]
   },
