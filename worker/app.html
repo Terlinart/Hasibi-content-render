@@ -1,0 +1,347 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
+<title>موجودی داروخانه</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;700;900&display=swap" rel="stylesheet" />
+<style>
+  :root { --blue:#1676D2; --green:#2F9E4F; --navy:#0E2A54; --light:#CFE3F8; --bg:#F4F8FC; --card:#fff; --ink:#10233F; --muted:#6B7A90; --red:#D93F3F; --orange:#E8890C; }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; background: var(--bg); color: var(--ink); font-family: Vazirmatn, Tahoma, sans-serif; }
+  body { padding: 14px 16px 120px; max-width: 560px; margin: 0 auto; }
+  header { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+  header svg { width: 46px; height: 46px; flex-shrink: 0; }
+  header .t1 { font-weight: 900; font-size: 18px; color: var(--navy); }
+  header .t2 { font-size: 13px; color: var(--muted); }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .tile { background: var(--card); border-radius: 20px; padding: 18px 14px; text-align: center; box-shadow: 0 4px 16px rgba(14,42,84,.08); border: 0; font: inherit; color: inherit; cursor: pointer; }
+  .tile b { display: block; font-size: 30px; margin-bottom: 6px; }
+  .tile span { font-weight: 700; font-size: 15px; }
+  .tile small { display: block; color: var(--muted); font-size: 12px; margin-top: 4px; }
+  .card { background: var(--card); border-radius: 20px; padding: 16px; box-shadow: 0 4px 16px rgba(14,42,84,.08); margin-bottom: 12px; }
+  h2 { font-size: 18px; margin: 0 0 10px; color: var(--navy); }
+  label { display: block; font-size: 13px; font-weight: 700; color: var(--muted); margin: 12px 0 6px; }
+  input, select, textarea { width: 100%; font: inherit; font-size: 16px; padding: 12px 14px; border-radius: 14px; border: 1.5px solid #D6E2EF; background: #fff; color: var(--ink); }
+  input:focus, select:focus, textarea:focus { outline: none; border-color: var(--blue); }
+  .row { display: flex; gap: 10px; }
+  .row > * { flex: 1; }
+  .btn { display: block; width: 100%; border: 0; border-radius: 16px; padding: 15px; font: inherit; font-weight: 900; font-size: 17px; background: var(--blue); color: #fff; margin-top: 14px; cursor: pointer; }
+  .btn.green { background: var(--green); }
+  .btn.ghost { background: transparent; color: var(--blue); border: 1.5px solid var(--light); font-weight: 700; font-size: 15px; padding: 12px; }
+  .btn:disabled { opacity: .5; }
+  #reader { width: 100%; border-radius: 18px; overflow: hidden; background: #000; min-height: 220px; }
+  #reader video { border-radius: 18px; }
+  .qty { display: flex; align-items: center; gap: 10px; }
+  .qty button { width: 52px; height: 52px; border-radius: 14px; border: 0; background: var(--light); color: var(--navy); font-size: 26px; font-weight: 900; }
+  .qty input { text-align: center; font-size: 22px; font-weight: 900; }
+  .pill { display: inline-block; padding: 4px 10px; border-radius: 999px; background: var(--light); color: var(--navy); font-size: 12px; font-weight: 700; margin: 2px; }
+  .lots div { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px dashed #E3EAF2; font-size: 14px; }
+  .lots div:last-child { border: 0; }
+  .muted { color: var(--muted); font-size: 13px; }
+  .toast { position: fixed; left: 16px; right: 16px; bottom: 24px; background: var(--navy); color: #fff; padding: 14px 16px; border-radius: 16px; font-weight: 700; text-align: center; transform: translateY(140%); transition: transform .25s; z-index: 9; }
+  .toast.show { transform: none; }
+  .back { background: none; border: 0; color: var(--blue); font: inherit; font-weight: 700; padding: 0; margin-bottom: 10px; cursor: pointer; }
+  .list .it { display: flex; justify-content: space-between; gap: 10px; padding: 8px 0; border-bottom: 1px dashed #E3EAF2; font-size: 14px; }
+  .red { color: var(--red); } .orange { color: var(--orange); }
+  .hidden { display: none !important; }
+  .mode { display: inline-block; padding: 4px 12px; border-radius: 999px; font-size: 12px; font-weight: 900; color: #fff; background: var(--blue); }
+  .mode.count { background: var(--green); }
+</style>
+</head>
+<body>
+<header>
+  <svg viewBox="28 28 1024 1024"><circle cx="540" cy="540" r="498" fill="#fff"/><circle cx="540" cy="540" r="485" fill="none" stroke="#0E2A54" stroke-width="27"/><g transform="translate(540 540) scale(1.75) translate(-539.5 -474.5)"><defs><clipPath id="a"><rect x="406" y="318" width="87" height="313" rx="43.5"/></clipPath><clipPath id="b"><rect x="586" y="318" width="87" height="313" rx="43.5"/></clipPath></defs><g clip-path="url(#a)"><rect x="406" y="318" width="87" height="157" fill="#1676D2"/><rect x="406" y="475" width="87" height="156" fill="#CFE3F8"/></g><g clip-path="url(#b)"><rect x="586" y="318" width="87" height="157" fill="#CFE3F8"/><rect x="586" y="475" width="87" height="156" fill="#0E2A54"/></g><rect x="464" y="442" width="152" height="66" rx="33" fill="#2F9E4F"/><rect x="517" y="403" width="46" height="144" rx="23" fill="#2F9E4F"/></g></svg>
+  <div><div class="t1">موجودی داروخانه دکتر حصیبی</div><div class="t2" id="hello">در حال اتصال…</div></div>
+</header>
+
+<!-- خانه -->
+<section id="home">
+  <div class="grid">
+    <button class="tile" data-go="in"><b>📥</b><span>ورود کالا</span><small>اسکن جنس تازه‌رسیده</small></button>
+    <button class="tile" data-go="count"><b>📋</b><span>شمارش ماهانه</span><small>ثبت تعداد واقعی قفسه</small></button>
+    <button class="tile" data-go="missed"><b>❌</b><span>نداشتیم</span><small>مشتری خواست، نبود</small></button>
+    <button class="tile hidden" id="tileStatus" data-go="status"><b>📊</b><span>وضعیت</span><small>انقضا و کمبود</small></button>
+  </div>
+  <p class="muted" style="margin-top:16px">داروهای نسخه‌ای هم ثبت می‌شوند ولی هرگز در تبلیغات استفاده نمی‌شوند. این اطلاعات فقط داخلی است.</p>
+</section>
+
+<!-- اسکن -->
+<section id="scan" class="hidden">
+  <button class="back" data-go="home">→ برگشت</button>
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><h2 style="margin:0">بارکد را جلوی دوربین بگیرید</h2><span class="mode" id="modeTag">ورود</span></div>
+    <div id="reader"></div>
+    <label>یا بارکد را تایپ کنید</label>
+    <div class="row"><input id="manual" inputmode="numeric" placeholder="مثلاً 6260000000000" /><button class="btn" style="margin:0;flex:0 0 90px" id="manualGo">ادامه</button></div>
+    <button class="btn ghost" id="noBarcode">کالا بارکد ندارد</button>
+  </div>
+</section>
+
+<!-- فرم کالا -->
+<section id="form" class="hidden">
+  <button class="back" id="formBack">→ اسکن بعدی</button>
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center"><h2 style="margin:0" id="fTitle">کالای جدید</h2><span class="mode" id="modeTag2">ورود</span></div>
+    <div class="muted" id="fCode" style="direction:ltr;text-align:right;margin-top:4px"></div>
+    <div id="newFields">
+      <label>نام کالا</label><input id="fName" placeholder="مثلاً مگنی‌فورت ۳۲ کپسول" />
+      <div class="row">
+        <div><label>دسته</label><select id="fCat"></select></div>
+        <div><label>حداقل موجودی</label><input id="fMin" type="number" inputmode="numeric" value="2" min="0" /></div>
+      </div>
+    </div>
+    <div id="lotsBox" class="hidden"><label>موجودی فعلی</label><div class="lots" id="lots"></div></div>
+    <label>تاریخ انقضا (شمسی)</label>
+    <div class="row"><select id="fMonth"></select><select id="fYear"></select></div>
+    <label>شماره سری (اختیاری)</label><input id="fBatch" style="direction:ltr" />
+    <label id="qtyLabel">تعداد رسیده</label>
+    <div class="qty"><button type="button" id="minus">−</button><input id="fQty" type="number" inputmode="numeric" value="1" min="0" /><button type="button" id="plus">+</button></div>
+    <button class="btn green" id="save">ثبت</button>
+  </div>
+</section>
+
+<!-- نداشتیم -->
+<section id="missed" class="hidden">
+  <button class="back" data-go="home">→ برگشت</button>
+  <div class="card">
+    <h2>مشتری چه خواست که نداشتیم؟</h2>
+    <label>اسم کالا</label><input id="mItem" placeholder="مثلاً ضدآفتاب بچه" />
+    <label>دسته</label><select id="mCat"></select>
+    <label>توضیح (اختیاری)</label><input id="mNote" placeholder="مثلاً گفت هفتهٔ بعد برمی‌گردد" />
+    <button class="btn" id="mSave">ثبت</button>
+  </div>
+</section>
+
+<!-- وضعیت (فقط دکتر) -->
+<section id="status" class="hidden">
+  <button class="back" data-go="home">→ برگشت</button>
+  <div class="card"><h2>خلاصه</h2><div id="sSum" class="muted">…</div></div>
+  <div class="card"><h2 class="red">⛔ منقضی</h2><div class="list" id="sExp"></div></div>
+  <div class="card"><h2 class="orange">⏳ کمتر از ۳ ماه</h2><div class="list" id="sSoon"></div></div>
+  <div class="card"><h2>🛒 کم‌موجود</h2><div class="list" id="sLow"></div></div>
+  <div class="card"><h2>❌ نداشتیم (۷ روز)</h2><div class="list" id="sMiss"></div></div>
+</section>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const div = (a, b) => ~~(a / b);
+const mod = (a, b) => a - ~~(a / b) * b;
+const BREAKS = [-61, 9, 38, 199, 426, 686, 756, 818, 1111, 1181, 1210, 1635, 2060, 2097, 2192, 2262, 2324, 2394, 2456, 3178];
+function jalCal(jy) {
+  let gy = jy + 621, leapJ = -14, jp = BREAKS[0], jm, jump = 0, n;
+  for (let i = 1; i < BREAKS.length; i++) {
+    jm = BREAKS[i];
+    jump = jm - jp;
+    if (jy < jm) break;
+    leapJ = leapJ + div(jump, 33) * 8 + div(mod(jump, 33), 4);
+    jp = jm;
+  }
+  n = jy - jp;
+  leapJ = leapJ + div(n, 33) * 8 + div(mod(n, 33) + 3, 4);
+  if (mod(jump, 33) === 4 && jump - n === 4) leapJ += 1;
+  const leapG = div(gy, 4) - div((div(gy, 100) + 1) * 3, 4) - 150;
+  const march = 20 + leapJ - leapG;
+  if (jump - n < 6) n = n - jump + div(jump + 4, 33) * 33;
+  let leap = mod(mod(n + 1, 33) - 1, 4);
+  if (leap === -1) leap = 4;
+  return {leap, gy, march};
+}
+function g2d(gy, gm, gd) {
+  let d = div((gy + div(gm - 8, 6) + 100100) * 1461, 4) + div(153 * mod(gm + 9, 12) + 2, 5) + gd - 34840408;
+  d = d - div(div(gy + 100100 + div(gm - 8, 6), 100) * 3, 4) + 752;
+  return d;
+}
+function d2g(jdn) {
+  let j = 4 * jdn + 139361631;
+  j = j + div(div(4 * jdn + 183187720, 146097) * 3, 4) * 4 - 3908;
+  const i = div(mod(j, 1461), 4) * 5 + 308;
+  const gd = div(mod(i, 153), 5) + 1;
+  const gm = mod(div(i, 153), 12) + 1;
+  const gy = div(j, 1461) - 100100 + div(8 - gm, 6);
+  return {gy, gm, gd};
+}
+function j2d(jy, jm, jd) {
+  const r = jalCal(jy);
+  return g2d(r.gy, 3, r.march) + (jm - 1) * 31 - div(jm, 7) * (jm - 7) + jd - 1;
+}
+function d2j(jdn) {
+  const gy = d2g(jdn).gy;
+  let jy = gy - 621;
+  const r = jalCal(jy);
+  let k = jdn - g2d(gy, 3, r.march);
+  if (k >= 0) {
+    if (k <= 185) return {jy, jm: 1 + div(k, 31), jd: mod(k, 31) + 1};
+    k -= 186;
+  } else {
+    jy -= 1;
+    k += 179;
+    if (r.leap === 1) k += 1;
+  }
+  return {jy, jm: 7 + div(k, 30), jd: mod(k, 30) + 1};
+}
+const toGregorian = (jy, jm, jd) => d2g(j2d(jy, jm, jd));
+const toJalali = (gy, gm, gd) => d2j(g2d(gy, gm, gd));
+const jMonthLength = (jy, jm) => (jm <= 6 ? 31 : jm <= 11 ? 30 : jalCal(jy).leap === 0 ? 30 : 29);
+
+const tg = window.Telegram && Telegram.WebApp;
+if (tg) { tg.ready(); tg.expand(); }
+const initData = tg ? tg.initData : '';
+const $ = (id) => document.getElementById(id);
+const fa = (s) => String(s).replace(/[0-9]/g, (d) => '۰۱۲۳۴۵۶۷۸۹'[d]);
+const MONTHS = ['فروردین','اردیبهشت','خرداد','تیر','مرداد','شهریور','مهر','آبان','آذر','دی','بهمن','اسفند'];
+let mode = 'in', current = null, scanner = null, busy = false, cats = [];
+
+const api = async (path, body = {}) => {
+  const r = await fetch(path, {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({initData, ...body})});
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw Object.assign(new Error(j.error || r.status), {data: j});
+  return j;
+};
+const toast = (t, ok = true) => {
+  const el = $('toast'); el.textContent = t; el.style.background = ok ? 'var(--navy)' : 'var(--red)';
+  el.classList.add('show'); setTimeout(() => el.classList.remove('show'), 2200);
+  try { tg && tg.HapticFeedback.notificationOccurred(ok ? 'success' : 'error'); } catch (e) {}
+};
+const show = (id) => {
+  ['home','scan','form','missed','status'].forEach((s) => $(s).classList.toggle('hidden', s !== id));
+  if (id === 'scan') startScan(); else stopScan();
+  if (id === 'status') loadStatus();
+  window.scrollTo(0, 0);
+};
+document.querySelectorAll('[data-go]').forEach((b) => b.addEventListener('click', () => {
+  const g = b.dataset.go;
+  if (g === 'in' || g === 'count') { mode = g; setModeTags(); show('scan'); } else show(g);
+}));
+const setModeTags = () => [$('modeTag'), $('modeTag2')].forEach((t) => { t.textContent = mode === 'count' ? 'شمارش' : 'ورود'; t.classList.toggle('count', mode === 'count'); });
+
+// ---------- تاریخ شمسی ----------
+const now = new Date(); const tj = toJalali(now.getFullYear(), now.getMonth() + 1, now.getDate());
+MONTHS.forEach((m, i) => $('fMonth').add(new Option(`${fa(i + 1)} - ${m}`, i + 1)));
+for (let y = tj.jy - 1; y <= tj.jy + 6; y++) $('fYear').add(new Option(fa(y), y));
+const setExpiry = (iso) => {
+  if (!iso) { $('fMonth').value = tj.jm; $('fYear').value = tj.jy + 1; return; }
+  const [gy, gm, gd] = iso.split('-').map(Number); const j = toJalali(gy, gm, gd);
+  if (![...$('fYear').options].some((o) => +o.value === j.jy)) $('fYear').add(new Option(fa(j.jy), j.jy));
+  $('fMonth').value = j.jm; $('fYear').value = j.jy;
+};
+const expiryIso = () => {
+  const jy = +$('fYear').value, jm = +$('fMonth').value; const g = toGregorian(jy, jm, jMonthLength(jy, jm));
+  return `${g.gy}-${String(g.gm).padStart(2,'0')}-${String(g.gd).padStart(2,'0')}`;
+};
+
+// ---------- بارکد GS1 دارو (GTIN + انقضا + سری) ----------
+function parseCode(raw) {
+  let s = String(raw || '').trim().replace(/^\]d2|^\]C1|^\]Q3/, '');
+  const out = {code: s, expiry: null, batch: null};
+  const fromYYMMDD = (v) => { let y = 2000 + +v.slice(0,2), m = +v.slice(2,4), d = +v.slice(4,6); if (!d) d = new Date(y, m, 0).getDate(); return `${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`; };
+  const take = (ai, val) => { if (ai === '01') out.code = val.startsWith('0') ? val.slice(1) : val; if (ai === '17') out.expiry = fromYYMMDD(val); if (ai === '10') out.batch = val; };
+  if (/^\(\d{2}\)/.test(s)) { s.replace(/\((\d{2})\)([^(]*)/g, (_, ai, v) => take(ai, v)); return out; }
+  if (/^01\d{14}/.test(s)) {
+    const FIX = {'01':14,'17':6,'11':6,'15':6,'13':6}; let i = 0;
+    while (i < s.length) {
+      const ai = s.slice(i, i + 2); i += 2;
+      if (FIX[ai]) { take(ai, s.slice(i, i + FIX[ai])); i += FIX[ai]; }
+      else { let j = s.indexOf('\u001d', i); if (j < 0) j = s.length; take(ai, s.slice(i, j)); i = j + 1; }
+    }
+  }
+  return out;
+}
+
+// ---------- دوربین ----------
+async function startScan() {
+  if (scanner || !window.Html5Qrcode) return;
+  scanner = new Html5Qrcode('reader', {formatsToSupport: [0, 3, 5, 6, 8, 9, 10, 14, 15], experimentalFeatures: {useBarCodeDetectorIfSupported: true}, verbose: false});
+  try {
+    await scanner.start({facingMode: 'environment'}, {fps: 12, qrbox: (w, h) => ({width: Math.min(w, 320), height: Math.min(h, 200)})}, (text) => { if (!busy) onCode(text); });
+  } catch (e) {
+    $('reader').innerHTML = '<div style="color:#fff;padding:30px;text-align:center">دوربین باز نشد. اجازهٔ دوربین را به تلگرام بدهید یا بارکد را تایپ کنید.</div>';
+    scanner = null;
+  }
+}
+async function stopScan() { if (scanner) { try { await scanner.stop(); } catch (e) {} scanner = null; } }
+
+$('manualGo').onclick = () => { const v = $('manual').value.trim(); if (v) onCode(v); };
+$('noBarcode').onclick = () => { const n = prompt('اسم کالا را بنویسید:'); if (n && n.trim()) onCode('N:' + n.trim(), n.trim()); };
+
+async function onCode(raw, presetName) {
+  busy = true;
+  const p = parseCode(raw);
+  try { tg && tg.HapticFeedback.impactOccurred('medium'); } catch (e) {}
+  try {
+    const r = await api('/api/lookup', {barcode: p.code});
+    await stopScan();
+    current = {code: p.code, product: r.product};
+    $('fCode').textContent = p.code.startsWith('N:') ? 'بدون بارکد' : p.code;
+    $('newFields').classList.toggle('hidden', !!r.product);
+    $('fTitle').textContent = r.product ? r.product.name : 'کالای جدید';
+    $('fName').value = presetName || ''; $('fMin').value = 2; $('fCat').value = cats[0];
+    $('lotsBox').classList.toggle('hidden', !r.lots.length);
+    $('lots').innerHTML = r.lots.map((l) => `<div><span>انقضا ${l.expiryFa}</span><b>${fa(l.qty)} عدد</b></div>`).join('');
+    setExpiry(p.expiry || (r.lots[0] && r.lots[0].expiry));
+    $('fBatch').value = p.batch || '';
+    $('fQty').value = mode === 'count' ? (r.lots[0] ? r.lots[0].qty : 0) : 1;
+    $('qtyLabel').textContent = mode === 'count' ? 'تعداد واقعی روی قفسه (همین تاریخ انقضا)' : 'تعداد رسیده';
+    $('manual').value = '';
+    show('form');
+    if (!r.product) setTimeout(() => $('fName').focus(), 200);
+  } catch (e) { toast(e.message === 'forbidden' ? 'دسترسی ندارید' : 'خطا در اتصال', false); }
+  busy = false;
+}
+$('minus').onclick = () => { $('fQty').value = Math.max(0, (+$('fQty').value || 0) - 1); };
+$('plus').onclick = () => { $('fQty').value = (+$('fQty').value || 0) + 1; };
+$('formBack').onclick = () => show('scan');
+$('save').onclick = async () => {
+  if (!current) return;
+  if (!current.product && !$('fName').value.trim()) return toast('اسم کالا را بنویسید', false);
+  $('save').disabled = true;
+  try {
+    const r = await api('/api/save', {mode, barcode: current.code, name: $('fName').value.trim(), category: current.product ? undefined : $('fCat').value, min_qty: current.product ? undefined : $('fMin').value, expiry: expiryIso(), batch: $('fBatch').value.trim() || null, qty: $('fQty').value});
+    toast(`✅ ثبت شد — موجودی کل: ${fa(r.total)}`);
+    show('scan');
+  } catch (e) { toast('ثبت نشد، دوباره بزنید', false); }
+  $('save').disabled = false;
+};
+
+// ---------- نداشتیم ----------
+$('mSave').onclick = async () => {
+  const item = $('mItem').value.trim(); if (!item) return toast('اسم کالا را بنویسید', false);
+  try { await api('/api/missed', {item, category: $('mCat').value, note: $('mNote').value}); toast('✅ ثبت شد'); $('mItem').value = ''; $('mNote').value = ''; show('home'); }
+  catch (e) { toast('ثبت نشد', false); }
+};
+
+// ---------- وضعیت ----------
+async function loadStatus() {
+  try {
+    const s = await api('/api/status');
+    $('sSum').textContent = `${fa(s.products)} قلم کالا • ${fa(s.units)} عدد`;
+    const row = (a, b) => `<div class="it"><span>${a}</span><b>${b}</b></div>`;
+    const empty = '<div class="muted">موردی نیست ✅</div>';
+    $('sExp').innerHTML = s.expired.map((l) => row(l.name, `${fa(l.qty)} • ${l.expiryFa}`)).join('') || empty;
+    $('sSoon').innerHTML = s.soon.map((l) => row(l.name, `${fa(l.qty)} • ${fa(l.days)} روز`)).join('') || empty;
+    $('sLow').innerHTML = s.low.map((p) => row(p.name, `${fa(p.total)} از ${fa(p.min)}`)).join('') || empty;
+    $('sMiss').innerHTML = s.missed.map((m) => row(m.item, `${fa(m.n)} بار`)).join('') || empty;
+  } catch (e) { toast('فقط دکتر حصیبی دسترسی دارد', false); show('home'); }
+}
+
+// ---------- شروع ----------
+(async () => {
+  if (!initData) { $('hello').textContent = 'این صفحه را از داخل ربات تلگرام باز کنید.'; return; }
+  try {
+    const me = await api('/api/me');
+    cats = me.categories;
+    [$('fCat'), $('mCat')].forEach((sel) => cats.forEach((c) => sel.add(new Option(c, c))));
+    $('hello').textContent = `سلام ${me.name} 👋`;
+    $('tileStatus').classList.toggle('hidden', !me.isAdmin);
+  } catch (e) {
+    $('hello').textContent = e.message === 'forbidden' ? 'دسترسی شما فعال نیست. آیدی‌تان را برای ترلین بفرستید.' : 'اتصال برقرار نشد.';
+    document.querySelectorAll('.tile').forEach((t) => (t.disabled = true));
+  }
+})();
+</script>
+</body>
+</html>

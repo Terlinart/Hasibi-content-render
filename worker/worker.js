@@ -12,6 +12,9 @@
 // KV binding:
 //   JOBS                برای دکمهٔ «یک نسخهٔ دیگر»
 
+import {dailyJob, handleApi, roles, sendCsv, snapshot, weeklyReport, ensureSchema} from './inventory.js';
+import APP_HTML from './app.html';
+
 const REPO = 'Terlinart/Hasibi-content-render';
 const MODELS = ['gemini-3.8-flash', 'gemini-flash-lite-latest', 'gemini-flash-latest'];
 
@@ -29,7 +32,23 @@ export default {
         secret_token: String(env.WEBHOOK_SECRET).trim(),
         allowed_updates: ['message', 'callback_query'],
       });
-      return json(r);
+      // دکمهٔ «📦 موجودی» کنار کادر پیام + دستورها
+      const m = await tg(env, 'setChatMenuButton', { menu_button: { type: 'web_app', text: '📦 موجودی', web_app: { url: `${url.origin}/app` } } });
+      await tg(env, 'setMyCommands', { commands: [
+        { command: 'start', description: 'شروع و راهنما' },
+        { command: 'app', description: 'باز کردن موجودی (اسکن بارکد)' },
+        { command: 'report', description: 'گزارش موجودی (فقط دکتر)' },
+        { command: 'excel', description: 'فایل اکسل موجودی (فقط دکتر)' },
+      ] });
+      return json({ webhook: r, menu: m });
+    }
+
+    // مینی‌اپ اسکن بارکد و API آن
+    if (url.pathname === '/app') {
+      return new Response(APP_HTML, { headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' } });
+    }
+    if (url.pathname.startsWith('/api/') && request.method === 'POST') {
+      return handleApi(request, env, url.pathname);
     }
 
     // فقط می‌گوید کدام تنظیمات وجود دارد (مقدارها هرگز نمایش داده نمی‌شوند)
@@ -44,6 +63,8 @@ export default {
         WEBHOOK_SECRET_has_spaces: /\s/.test(String(env.WEBHOOK_SECRET || '')),
         ALLOWED_USER_IDS: has('ALLOWED_USER_IDS'),
         JOBS: env.JOBS ? 'OK' : 'MISSING',
+        DB: env.DB ? 'OK' : 'MISSING',
+        ADMIN_IDS: has('ADMIN_IDS'),
       });
     }
 
@@ -63,6 +84,11 @@ export default {
     }
 
     return new Response('Hasibi content bot is running.');
+  },
+
+  // هر روز ۰۹:۰۰ به وقت تهران: هشدار انقضا/کمبود؛ شنبه‌ها گزارش کامل + اکسل
+  async scheduled(event, env, ctx) {
+    ctx.waitUntil(dailyJob(env));
   },
 };
 
@@ -86,11 +112,29 @@ async function handle(update, env) {
     return regen(env, chatId);
   }
 
+  const r = roles(env);
+  const isAdmin = r.admins.includes(userId);
+  const canScan = r.scanners.includes(userId);
+  const appButton = { reply_markup: { inline_keyboard: [[{ text: '📦 باز کردن موجودی (اسکن بارکد)', web_app: { url: `${env.PUBLIC_URL || 'https://hasibi-content-render.terlinartgroup.workers.dev'}/app` } }]] } };
+
   if (/^\/(start|id)/.test(text)) {
-    return send(env, chatId,
-      `سلام! 👋\nآیدی شما: <code>${userId}</code>\n` +
-      (allowed ? '✅ دسترسی شما فعال است.' : 'این آیدی را برای ترلین بفرستید تا دسترسی فعال شود.') +
-      '\n\nروش کار:\n۱. از روبه‌روی جعبهٔ محصول یک عکس واضح بگیرید.\n۲. همان عکس را بفرستید و متن را در کپشن عکس بنویسید.\n۳. حدود ۵ دقیقه بعد ریلز، پست و ۲ استوری همین‌جا می‌آید.\n\n⚠️ فقط مکمل، آرایشی و بهداشتی. ادعاهایی که روی جعبه نیست خودکار حذف می‌شود.');
+    let t = `سلام! 👋\nآیدی شما: <code>${userId}</code>\n`;
+    if (!canScan) t += 'این آیدی را برای ترلین بفرستید تا دسترسی فعال شود.';
+    if (allowed) t += '\n🎬 <b>ساخت محتوا:</b> عکس روبه‌روی جعبه را بفرستید (متن اختیاری در کپشن). حدود ۵ دقیقه بعد ریلز، پست و ۲ استوری همین‌جا می‌آید. فقط مکمل، آرایشی و بهداشتی.\n';
+    if (canScan) t += '\n📦 <b>موجودی:</b> دکمهٔ زیر یا «📦 موجودی» کنار کادر پیام را بزنید؛ بارکد را اسکن کنید، تاریخ انقضا و تعداد را ثبت کنید.\n';
+    if (isAdmin) t += '\n📊 هر روز ۹ صبح هشدار انقضا و کمبود (اگر چیز تازه‌ای باشد) و شنبه‌ها گزارش کامل + فایل اکسل برای شما می‌آید.\n/report گزارش همین الان • /excel فایل اکسل';
+    return tg(env, 'sendMessage', { chat_id: chatId, text: t, parse_mode: 'HTML', ...(canScan ? appButton : {}) });
+  }
+  if (/^\/app/.test(text)) {
+    if (!canScan) return send(env, chatId, `⛔️ دسترسی شما فعال نیست.\nآیدی شما: <code>${userId}</code>`);
+    return tg(env, 'sendMessage', { chat_id: chatId, text: '📦 موجودی داروخانه', ...appButton });
+  }
+  if (/^\/(report|excel)/.test(text)) {
+    if (!isAdmin) return send(env, chatId, '⛔️ گزارش موجودی فقط برای دکتر حصیبی است.');
+    const s = await snapshot(env);
+    if (/^\/report/.test(text)) return send(env, chatId, weeklyReport(s));
+    if (!s.lots.length && !s.products.length) return send(env, chatId, 'هنوز کالایی ثبت نشده است.');
+    return sendCsv(env, chatId, s);
   }
 
   if (!fileId) return send(env, chatId, '📸 عکس روبه‌روی جعبهٔ محصول را بفرستید و متن را در کپشن همان عکس بنویسید.');

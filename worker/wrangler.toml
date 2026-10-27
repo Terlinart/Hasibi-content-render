@@ -6,12 +6,32 @@ compatibility_date = "2026-10-01"
 keep_vars = true
 
 [vars]
-# آیدی‌های مجاز تلگرام: ترلین، دکتر حصیبی
+# ساخت محتوا: دکتر حصیبی، ترلین
 ALLOWED_USER_IDS = "336633779,96650098"
+# هشدار و گزارش موجودی فقط برای دکتر حصیبی
+ADMIN_IDS = "336633779"
+# فقط اسکن موجودی (خانم طهماسبی؛ آیدی بعد از /start اضافه می‌شود)
+STAFF_IDS = ""
+PUBLIC_URL = "https://hasibi-content-render.terlinartgroup.workers.dev"
 
 # برای دکمهٔ «یک نسخهٔ دیگر» — Cloudflare خودش موقع اولین deploy می‌سازد
 [[kv_namespaces]]
 binding = "JOBS"
+
+# موجودی و انقضا — Cloudflare خودش موقع deploy می‌سازد
+[[d1_databases]]
+binding = "DB"
+database_name = "hasibi-inventory"
+
+# هر روز ۰۵:۳۰ UTC = ۰۹:۰۰ به وقت تهران
+[triggers]
+crons = ["30 5 * * *"]
+
+# صفحهٔ مینی‌اپ به‌صورت متن داخل Worker
+[[rules]]
+type = "Text"
+globs = ["**/*.html"]
+fallthrough = true
 
 # قبل از هر deploy، Secretهای بخش Build را روی Worker می‌گذارد
 [build]
