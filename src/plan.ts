@@ -2,6 +2,7 @@
 // کدام پالت، کدام بافت و چه ضرب‌آهنگی. افکت‌های صوتی (cues) هم همین‌جا با فریم دقیق ساخته می‌شوند
 // و scripts/audio.py آن‌ها را می‌خواند؛ پس تصویر و صدا همیشه هماهنگ‌اند.
 import type {ContentProps} from './brand';
+import {BRAND} from './brand';
 
 export const FPS = 30;
 
@@ -42,22 +43,27 @@ export const packNumber = (pack: string) => {
   const m = en.match(/\d+/);
   return m ? Number(m[0]) : 0;
 };
-export const checklistItems = (p: ContentProps) => (p.badges.length >= 2 ? p.badges : p.ingredients).slice(0, 4);
-export const notifyItems = (p: ContentProps) => [p.boxClaim, ...p.ingredients].filter(Boolean).slice(0, 4);
+// متن روی جعبه (ادعا، ترکیبات، برچسب‌ها) عمداً هیچ‌جا تکرار نمی‌شود؛ مخاطب خودش جعبه را می‌خواند.
+// همهٔ متن‌های صحنه‌ها فقط از اسم، دسته، بسته و اطلاعات داروخانه ساخته می‌شوند.
+export const infoChips = (p: ContentProps) => [p.category, p.packInfo, 'موجود شد ✅', 'مشاورهٔ رایگان'].filter(Boolean).slice(0, 4);
+export const checklistItems = (_p: ContentProps) => ['موجود در داروخانه', 'مشاورهٔ رایگان با دکتر', BRAND.hours];
+export const notifyItems = (p: ContentProps) => [`${p.productFa} موجود شد ✅`, `${p.category} • ${p.packInfo}`, 'مشاورهٔ رایگان با دکتر حصیبی', `${BRAND.address} • ${BRAND.hours}`];
+export const captionLine = (p: ContentProps) => `${p.productFa} حالا در داروخانه دکتر حصیبی`;
+export const neonItems = (p: ContentProps) => [p.productFa, p.category, p.packInfo, 'موجود در داروخانه'].filter(Boolean);
 
 // ---------- طول هر صحنه (فریم) ----------
 export const durationOf = (type: SceneType, p: ContentProps): number => {
-  const nIng = Math.min(4, p.ingredients.length);
+  const nIng = neonItems(p).length;
   switch (type) {
     case 'slam': return 54;
     case 'zoomType': return Math.max(40, words(p.hook).length * 8 + 22);
     case 'drop': return 60;
     case 'glitch': return 50;
     case 'glass': return 110;
-    case 'neon': return 40 + nIng * 14 + 40;
+    case 'neon': return 40 + nIng * 14 + 30;
     case 'poster': return 90;
     case 'notify': return 24 + notifyItems(p).length * 16 + 34;
-    case 'karaoke': return Math.min(130, Math.max(70, words(p.boxClaim).length * 7 + 36));
+    case 'karaoke': return Math.min(130, Math.max(70, words(captionLine(p)).length * 7 + 36));
     case 'orbit': return 110;
     case 'grid': return 84;
     case 'checklist': return 34 + checklistItems(p).length * 12 + 30;
@@ -101,12 +107,11 @@ export const sceneCues = (type: SceneType, p: ContentProps, dur: number): Cue[] 
       add(22, 'click', 0.6);
       break;
     case 'neon': {
-      const n = Math.min(4, p.ingredients.length);
+      const n = neonItems(p).length;
       for (let i = 0; i < n; i++) {
         add(10 + i * 14, 'zap', 0.6);
         add(14 + i * 14, 'click', 0.35);
       }
-      p.badges.slice(0, 3).forEach((_, i) => add(22 + n * 14 + i * 5, 'pop', 0.5));
       break;
     }
     case 'poster':
@@ -119,12 +124,12 @@ export const sceneCues = (type: SceneType, p: ContentProps, dur: number): Cue[] 
       break;
     case 'karaoke':
       add(0, 'whoosh', 0.45, 0.4);
-      words(p.boxClaim).forEach((_, i) => add(10 + i * 7, 'tick', 0.45));
+      words(captionLine(p)).forEach((_, i) => add(10 + i * 7, 'tick', 0.45));
       break;
     case 'orbit':
       add(0, 'whoosh_down', 0.5, 0.5);
       add(16, 'shimmer', 0.4, 1.4);
-      p.ingredients.slice(0, 4).forEach((_, i) => add(8 + i * 6, 'pop', 0.55));
+      infoChips(p).forEach((_, i) => add(8 + i * 6, 'pop', 0.55));
       break;
     case 'grid':
       [0, 1, 2, 3].forEach((i) => add(4 + i * 5, 'pop', 0.65));
@@ -183,9 +188,9 @@ export const makePlan = (p: ContentProps): Plan => {
 
   const hook = choose<HookType>(['slam', 'zoomType', 'drop', 'glitch'], r);
 
-  // سه صحنهٔ میانی، هر کدام از یک گروه تا همیشه «ادعای روی جعبه»، «ترکیبات» و «تصویر محصول» دیده شوند
+  // سه صحنهٔ میانی، هر کدام از یک گروه: «معرفی محصول»، «خدمات داروخانه» و «تصویر محصول»
   const claimGroup: MidType[] = ['poster', 'karaoke', 'notify'];
-  const ingGroup: MidType[] = p.ingredients.length ? ['neon', 'orbit', 'checklist'] : ['checklist'];
+  const ingGroup: MidType[] = ['neon', 'orbit', 'checklist'];
   const visGroup: MidType[] = ['glass', 'grid', 'orbit'];
   const mids: MidType[] = [];
   for (const g of shuffle([claimGroup, ingGroup, visGroup], r)) {

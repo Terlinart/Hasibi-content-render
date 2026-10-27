@@ -143,8 +143,6 @@ Rules:
 - is_prescription_drug: true if this is a medicine that needs a prescription.
 - productEn: brand name exactly as printed. productFa: Persian transliteration of it.
 - boxClaim: Persian translation of ONLY the benefit statement literally printed on the box, starting with «برای» (example: "Healthy Muscles, Bones & Nervous System" -> "برای سلامت عضلات، استخوان‌ها و سیستم عصبی"). Add nothing that is not printed. Empty string if none.
-- ingredients: up to 4 key ingredients or features printed on the box, in Persian, keep vitamin codes in Latin (e.g. "ویتامین B1 و B6"), each under 22 characters.
-- badges: up to 3 free-from or quality labels printed on the box, in Persian, each under 16 characters.
 - packInfo: amount and form with Persian digits, e.g. "۳۲ کپسول". Empty if not visible.
 - user_claims: split the staff text into separate claims. on_box is true ONLY if the same meaning is printed on the box. reason: short Persian explanation.
 - Never invent claims, doses, diagnoses or medical advice. If the image is not a product box, set is_product_box false.`;
@@ -191,24 +189,19 @@ function buildContent(a) {
     productEn: String(a.productEn || '').slice(0, 30),
     category,
     hook: hooks(category)[seed % 4],
-    boxClaim: String(a.boxClaim || 'مشخصات کامل روی جعبهٔ محصول').slice(0, 70),
-    ingredients: (a.ingredients || []).slice(0, 4).map((x) => String(x).slice(0, 24)),
-    badges: (a.badges || []).slice(0, 3).map((x) => String(x).slice(0, 18)),
+    // متن روی جعبه (ادعا، ترکیبات، برچسب‌ها) عمداً در محتوا نمی‌آید؛ مخاطب خودش جعبه را می‌خواند.
+    boxClaim: '',
+    ingredients: [],
+    badges: [],
     packInfo: fa(a.packInfo || category),
     seed,
   };
-  if (!job.ingredients.length) job.ingredients = [job.category, job.packInfo];
-  const claims = a.user_claims || [];
-  const removed = claims.filter((c) => !c.on_box);
-  const kept = claims.filter((c) => c.on_box);
   const tag = (t) => '#' + String(t).replace(/\s+/g, '_').replace(/[^\p{L}\p{N}_]/gu, '');
   const caption = [
     '✨ ' + job.productFa + (job.productEn ? ' (' + job.productEn + ')' : '') + ' در داروخانه دکتر حصیبی',
     '',
     '📦 ' + job.packInfo + ' | ' + job.category,
-    a.boxClaim ? '✅ طبق نوشتهٔ روی جعبه: ' + job.boxClaim : '',
-    ...job.ingredients.map((i) => '🔹 ' + i),
-    job.badges.length ? '🌱 ' + job.badges.join(' • ') : '',
+    '✅ موجود شد',
     '',
     '💬 سؤال دارویی دارید؟ با دکتر حصیبی مشورت کنید.',
     '👥 گروه مشاوره: t.me/drhasibi_pharmacy_group',
@@ -221,11 +214,8 @@ function buildContent(a) {
   ].filter((l, i, arr) => l !== '' || (i > 0 && arr[i - 1] !== '')).join('\n');
 
   let report = '✅ عکس دریافت شد. ریلز، پست و ۲ استوری در حال ساخت است (حدود ۵ دقیقه).\n\n';
-  report += '📦 محصول: ' + esc(job.productFa) + ' — ' + esc(job.category) + '\n';
-  report += '📝 ادعای روی جعبه: ' + esc(a.boxClaim || 'چیزی پیدا نشد') + '\n';
-  if (kept.length) report += '\n✔️ ادعاهای تأییدشده (روی جعبه هست):\n' + kept.map((c) => '• ' + esc(c.claim)).join('\n') + '\n';
-  if (removed.length) report += '\n🚫 حذف شد چون روی جعبه نیست (ادعای درمانی ممنوع):\n' + removed.map((c) => '• ' + esc(c.claim) + (c.reason ? ' — ' + esc(c.reason) : '')).join('\n') + '\n';
-  report += '\n💡 برای مشاورهٔ این موارد، مشتری را به دکتر حصیبی ارجاع دهید.';
+  report += '📦 محصول: ' + esc(job.productFa) + (job.productEn ? ' (' + esc(job.productEn) + ')' : '') + ' — ' + esc(job.category) + ' • ' + esc(job.packInfo) + '\n\n';
+  report += 'ℹ️ متن روی جعبه و ادعاهای متن ارسالی در پست و ویدیو تکرار نمی‌شود؛ فقط عکس، اسم، دسته و بسته.';
   return { ok: true, job, caption, report };
 }
 

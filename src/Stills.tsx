@@ -26,23 +26,21 @@ export const Post: React.FC<ContentProps> = (p) => {
         </div>
         <div style={{...display, fontSize: 118, color: BRAND.navy, marginTop: 22, lineHeight: 1}}>{p.productFa}</div>
         <div style={{...base, fontSize: 32, fontWeight: 700, color: ac.a, letterSpacing: 2, direction: 'ltr'}}>{p.productEn}</div>
-        <div style={{position: 'relative', marginTop: 10, height: 520, display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
+        <div style={{position: 'relative', marginTop: 20, height: 640, display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
           <div
             style={{
               position: 'absolute',
-              width: 520,
-              height: 520,
+              width: 640,
+              height: 640,
               borderRadius: '50%',
               background: `radial-gradient(circle, ${ac.glow}55, transparent 68%)`,
             }}
           />
-          <ProductImage src={p.imageSrc} height={500} />
+          <ProductImage src={p.imageSrc} height={620} />
         </div>
-        <div style={{...base, fontSize: 40, fontWeight: 900, color: BRAND.navy, textAlign: 'center', marginTop: 4}}>{p.boxClaim}</div>
-        <div style={{display: 'flex', gap: 10, flexWrap: 'wrap', justifyContent: 'center', marginTop: 20, maxWidth: 980}}>
-          {p.ingredients.map((t, i) => (
-            <Chip key={t} text={t} color={i % 2 ? ac.b : ac.a} size={25} />
-          ))}
+        <div style={{display: 'flex', gap: 16, marginTop: 30}}>
+          <Chip text={p.packInfo} color={ac.a} dark size={34} />
+          <Chip text="موجود شد ✅" color={ac.b} dark size={34} />
         </div>
         <div style={{flex: 1}} />
         <div
@@ -89,7 +87,7 @@ export const Story1: React.FC<ContentProps> = (p) => {
   );
 };
 
-// استوری ۲: ترکیبات + راه ارتباط
+// استوری ۲: مشاوره + راه ارتباط
 export const Story2: React.FC<ContentProps> = (p) => {
   useFonts();
   const ac = pick(ACCENTS, p.seed, 2);
@@ -103,33 +101,13 @@ export const Story2: React.FC<ContentProps> = (p) => {
       />
       <AbsoluteFill style={{padding: '90px 64px', display: 'flex', flexDirection: 'column', alignItems: 'center'}}>
         <Header dark />
-        <div style={{...display, fontSize: 84, color: '#fff', marginTop: 60, textShadow: `0 0 30px ${ac.glow}`}}>روی جعبه چی نوشته؟</div>
-        <div style={{...base, fontSize: 40, fontWeight: 700, color: ac.glow, marginTop: 10, textAlign: 'center'}}>{p.boxClaim}</div>
-        <div style={{display: 'flex', flexDirection: 'column', gap: 30, marginTop: 70, alignSelf: 'stretch'}}>
-          {p.ingredients.map((t, i) => (
-            <div
-              key={t}
-              style={{
-                ...base,
-                fontSize: 54,
-                fontWeight: 900,
-                color: '#fff',
-                padding: '32px 40px',
-                borderRadius: 28,
-                background: 'rgba(255,255,255,.06)',
-                border: `2px solid ${i % 2 ? ac.b : ac.a}`,
-                boxShadow: `0 0 26px ${(i % 2 ? ac.b : ac.a)}55, inset 0 0 18px ${(i % 2 ? ac.b : ac.a)}33`,
-              }}
-            >
-              {t}
-            </div>
-          ))}
+        <div style={{...display, fontSize: 96, color: '#fff', marginTop: 60, textShadow: `0 0 30px ${ac.glow}`}}>سؤال دارید؟</div>
+        <div style={{...base, fontSize: 42, fontWeight: 700, color: ac.glow, marginTop: 6, textAlign: 'center'}}>قبل از خرید با دکتر حصیبی مشورت کنید</div>
+        <div style={{position: 'relative', marginTop: 60, height: 760, display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
+          <div style={{position: 'absolute', width: 760, height: 760, borderRadius: '50%', background: `radial-gradient(circle, ${ac.a}88, transparent 66%)`}} />
+          <ProductImage src={p.imageSrc} height={700} />
         </div>
-        <div style={{display: 'flex', gap: 14, flexWrap: 'wrap', justifyContent: 'center', marginTop: 34}}>
-          {p.badges.map((b) => (
-            <Chip key={b} text={b} color="#fff" size={28} />
-          ))}
-        </div>
+        <div style={{...display, fontSize: 90, color: '#fff', marginTop: 20}}>{p.productFa}</div>
         <div style={{flex: 1}} />
         <div style={{display: 'flex', alignItems: 'center', gap: 34}}>
           <QR size={230} color={qrColor} dots={p.seed % 2 === 0} />

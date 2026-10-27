@@ -111,10 +111,3 @@ export const Overlay: React.FC<{kind: 'grain' | 'leak' | 'vignette' | 'none'; ac
   if (kind === 'vignette') return <AbsoluteFill style={{background: 'radial-gradient(circle at 50% 45%, transparent 55%, rgba(0,0,0,.45) 100%)'}} />;
   return null;
 };
-
-// نوار کوچک «طبق نوشتهٔ روی جعبه»
-export const BoxNote: React.FC<{dark?: boolean; size?: number}> = ({dark, size = 30}) => (
-  <div style={{fontFamily: 'Vazirmatn', direction: 'rtl', fontWeight: 700, fontSize: size, color: dark ? 'rgba(255,255,255,.8)' : '#5B6B80'}}>
-    طبق نوشتهٔ روی جعبهٔ محصول
-  </div>
-);

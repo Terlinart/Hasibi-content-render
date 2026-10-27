@@ -4,8 +4,8 @@ import React from 'react';
 import {AbsoluteFill, interpolate, spring, useCurrentFrame, useVideoConfig, Easing, Img} from 'remotion';
 import {BRAND, faDigits} from '../brand';
 import {base, Chip, display, LogoMark, ProductImage, resolveSrc} from '../components';
-import {checklistItems, notifyItems, packNumber, words} from '../plan';
-import {BlurredBg, BoxNote, clampI, Particles, SceneProps} from './shared';
+import {captionLine, checklistItems, infoChips, neonItems, notifyItems, packNumber, words} from '../plan';
+import {BlurredBg, clampI, Particles, SceneProps} from './shared';
 
 // شیشه‌ای سه‌بعدی
 export const Glass: React.FC<SceneProps> = ({p, ac, dur}) => {
@@ -37,13 +37,12 @@ export const Glass: React.FC<SceneProps> = ({p, ac, dur}) => {
 export const Neon: React.FC<SceneProps> = ({p, ac}) => {
   const f = useCurrentFrame();
   const {fps} = useVideoConfig();
-  const items = p.ingredients.slice(0, 4);
-  const badgeStart = 22 + items.length * 14;
+  const items = neonItems(p);
   return (
     <AbsoluteFill style={{background: BRAND.navyDeep}}>
       <AbsoluteFill style={{background: `repeating-linear-gradient(0deg, ${ac.glow}22 0 2px, transparent 2px 80px), repeating-linear-gradient(90deg, ${ac.glow}22 0 2px, transparent 2px 80px)`, transform: `perspective(900px) rotateX(58deg) translateY(${(f * 4) % 80}px) scale(2)`, transformOrigin: '50% 100%', top: '45%'}} />
       <AbsoluteFill style={{padding: '170px 80px', ...base, alignItems: 'stretch'}}>
-        <div style={{...display, fontSize: 92, color: '#fff', textAlign: 'center', textShadow: `0 0 24px ${ac.glow}, 0 0 60px ${ac.a}`}}>روی جعبه چی نوشته؟</div>
+        <div style={{...display, fontSize: 92, color: '#fff', textAlign: 'center', textShadow: `0 0 24px ${ac.glow}, 0 0 60px ${ac.a}`}}>تازه در داروخانه</div>
         <div style={{display: 'flex', flexDirection: 'column', gap: 30, marginTop: 70}}>
           {items.map((t, i) => {
             const s = spring({frame: f - 10 - i * 14, fps, config: {damping: 12, stiffness: 160}});
@@ -53,16 +52,6 @@ export const Neon: React.FC<SceneProps> = ({p, ac}) => {
               <div key={t} style={{fontSize: 58, fontWeight: 900, color: '#fff', padding: '30px 40px', borderRadius: 30, border: `3px solid ${c}`, boxShadow: `0 0 30px ${c}, inset 0 0 22px ${c}66`, background: 'rgba(6,22,46,.6)', transform: `translateX(${(1 - s) * 700}px)`, opacity: s * flicker, display: 'flex', alignItems: 'center', gap: 24}}>
                 <span style={{color: c, fontSize: 46}}>◆</span>
                 {t}
-              </div>
-            );
-          })}
-        </div>
-        <div style={{display: 'flex', gap: 16, justifyContent: 'center', flexWrap: 'wrap', marginTop: 50}}>
-          {p.badges.slice(0, 3).map((b, i) => {
-            const s = spring({frame: f - badgeStart - i * 5, fps, config: {damping: 10, stiffness: 220}});
-            return (
-              <div key={b} style={{transform: `scale(${s})`}}>
-                <Chip text={b} color="#fff" size={32} />
               </div>
             );
           })}
@@ -83,9 +72,12 @@ export const Poster: React.FC<SceneProps> = ({p, ac}) => {
       <AbsoluteFill style={{alignItems: 'center', padding: '200px 70px', ...base}}>
         <div style={{...display, fontSize: 130, color: '#fff', lineHeight: 1.05, textAlign: 'center', transform: `scale(${s})`}}>{p.productFa}</div>
         <div style={{flex: 1}} />
-        <div style={{...display, fontSize: 104, color: BRAND.navy, textAlign: 'center', lineHeight: 1.25, transform: `translateY(${(1 - s) * 200}px)`, opacity: s}}>{p.boxClaim}</div>
-        <div style={{marginTop: 34, opacity: clampI(f, [20, 34], [0, 1])}}>
-          <BoxNote />
+        <div style={{transform: `translateY(${(1 - s) * 200}px)`, opacity: s}}>
+          <ProductImage src={p.imageSrc} height={620} />
+        </div>
+        <div style={{display: 'flex', gap: 20, marginTop: 50, opacity: clampI(f, [16, 28], [0, 1])}}>
+          <Chip text={p.category} color={ac.a} dark size={46} />
+          <Chip text={p.packInfo} color={BRAND.navy} dark size={46} />
         </div>
         <div style={{flex: 1}} />
       </AbsoluteFill>
@@ -118,7 +110,6 @@ export const Notify: React.FC<SceneProps> = ({p, ac}) => {
                 <div style={{fontSize: 32, fontWeight: 700, color: BRAND.ink, flex: 1}}>{BRAND.name}</div>
                 <div style={{fontSize: 28, color: '#6B7A90'}}>اکنون</div>
               </div>
-              {i === 0 && <div style={{fontSize: 28, fontWeight: 700, color: ac.a, marginTop: 14}}>طبق نوشتهٔ روی جعبه</div>}
               <div style={{fontSize: i === 0 ? 46 : 50, fontWeight: 900, color: BRAND.ink, marginTop: 10, lineHeight: 1.35}}>{t}</div>
             </div>
           );
@@ -132,7 +123,7 @@ export const Notify: React.FC<SceneProps> = ({p, ac}) => {
 export const Karaoke: React.FC<SceneProps> = ({p, ac}) => {
   const f = useCurrentFrame();
   const {fps} = useVideoConfig();
-  const w = words(p.boxClaim);
+  const w = words(captionLine(p));
   const k = Math.max(0, Math.min(w.length - 1, Math.floor((f - 10) / 7)));
   const g = Math.floor(k / 3);
   const group = w.slice(g * 3, g * 3 + 3);
@@ -157,18 +148,15 @@ export const Karaoke: React.FC<SceneProps> = ({p, ac}) => {
             );
           })}
       </div>
-      <div style={{position: 'absolute', bottom: 170, width: '100%', display: 'flex', justifyContent: 'center'}}>
-        <BoxNote dark />
-      </div>
     </AbsoluteFill>
   );
 };
 
-// مدار: محصول وسط، ترکیبات دورش می‌چرخند
+// مدار: محصول وسط، برچسب‌های دسته/بسته/موجود دورش می‌چرخند
 export const Orbit: React.FC<SceneProps> = ({p, ac}) => {
   const f = useCurrentFrame();
   const {fps} = useVideoConfig();
-  const items = p.ingredients.slice(0, 4);
+  const items = infoChips(p);
   const enter = spring({frame: f, fps, config: {damping: 13}});
   const chips = items.map((t, i) => {
     const ang = f * 0.035 + (i * Math.PI * 2) / Math.max(1, items.length);
@@ -244,7 +232,7 @@ export const Checklist: React.FC<SceneProps> = ({p, ac}) => {
             <div style={{fontSize: 36, fontWeight: 700, color: ac.a, marginTop: 8}}>{p.packInfo}</div>
           </div>
         </div>
-        <div style={{...display, fontSize: 80, color: BRAND.navy, marginTop: 70}}>روی جعبه:</div>
+        <div style={{...display, fontSize: 80, color: BRAND.navy, marginTop: 70}}>در داروخانه دکتر حصیبی</div>
         <div style={{display: 'flex', flexDirection: 'column', gap: 46, marginTop: 40}}>
           {items.map((t, i) => {
             const draw = clampI(f, [14 + i * 12, 20 + i * 12], [1, 0]);

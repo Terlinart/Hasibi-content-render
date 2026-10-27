@@ -217,6 +217,6 @@ export const Footer: React.FC<{size?: number; dark?: boolean}> = ({size = 28, da
 
 export const Disclaimer: React.FC<{dark?: boolean; size?: number}> = ({dark, size = 22}) => (
   <div style={{...base, fontSize: size, color: dark ? 'rgba(255,255,255,.75)' : '#5B6B80', textAlign: 'center'}}>
-    ادعا فقط طبق نوشتهٔ روی جعبه • {BRAND.consult}
+    {BRAND.consult}
   </div>
 );
