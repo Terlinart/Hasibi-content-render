@@ -20,15 +20,14 @@ export default {
     const url = new URL(request.url);
 
     // یک‌بار بعد از نصب: https://<worker>/setup?key=<WEBHOOK_SECRET>
+    // وب‌هوک تلگرام را به همین Worker وصل می‌کند. رمز لازم ندارد چون فقط به خود همین Worker اشاره می‌کند.
     if (url.pathname === '/setup') {
       if (!env.WEBHOOK_SECRET) return new Response('WEBHOOK_SECRET is not set in Cloudflare', { status: 500 });
-      if ((url.searchParams.get('key') || '').trim() !== String(env.WEBHOOK_SECRET).trim()) return new Response('forbidden: key does not match WEBHOOK_SECRET', { status: 403 });
       const hook = `${url.origin}/telegram`;
       const r = await tg(env, 'setWebhook', {
         url: hook,
         secret_token: String(env.WEBHOOK_SECRET).trim(),
         allowed_updates: ['message', 'callback_query'],
-        drop_pending_updates: true,
       });
       return json(r);
     }
