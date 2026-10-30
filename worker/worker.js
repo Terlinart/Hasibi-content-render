@@ -65,6 +65,7 @@ export default {
         JOBS: env.JOBS ? 'OK' : 'MISSING',
         DB: env.DB ? 'OK' : 'MISSING',
         ADMIN_IDS: has('ADMIN_IDS'),
+        GITHUB_CHECK: url.searchParams.has('gh') ? await githubCheck(env) : 'add ?gh=1',
       });
     }
 
@@ -276,6 +277,17 @@ async function dispatch(env, p) {
     body: JSON.stringify({ event_type: 'render', client_payload: { chat_id: p.chatId, file_id: p.fileId, caption: p.caption, job: p.job } }),
   });
   return r.status === 204;
+}
+
+// فقط وضعیت توکن گیت‌هاب را برمی‌گرداند (بدون نمایش خود توکن)
+async function githubCheck(env) {
+  const r = await fetch(`https://api.github.com/repos/${REPO}`, {
+    headers: { Authorization: `Bearer ${env.GITHUB_TOKEN}`, Accept: 'application/vnd.github+json', 'User-Agent': 'hasibi-content-bot' },
+  });
+  const exp = r.headers.get('github-authentication-token-expiration') || '';
+  let push = null;
+  try { push = (await r.json())?.permissions?.push ?? null; } catch {}
+  return { status: r.status, push, expires: exp };
 }
 
 async function tg(env, method, body) {
