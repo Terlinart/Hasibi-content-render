@@ -34,5 +34,3 @@ globs = ["**/*.html"]
 fallthrough = true
 
 # قبل از هر deploy، Secretهای بخش Build را روی Worker می‌گذارد
-[build]
-command = "node push-secrets.mjs"
