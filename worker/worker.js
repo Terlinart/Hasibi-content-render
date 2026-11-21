@@ -269,7 +269,7 @@ async function dispatch(env, p) {
   const r = await fetch(`https://api.github.com/repos/${REPO}/dispatches`, {
     method: 'POST',
     headers: {
-      Authorization: `Bearer ${env.GITHUB_TOKEN}`,
+      Authorization: `Bearer ${String(env.GITHUB_TOKEN || '').trim()}`,
       Accept: 'application/vnd.github+json',
       'User-Agent': 'hasibi-content-bot',
       'Content-Type': 'application/json',
@@ -282,12 +282,15 @@ async function dispatch(env, p) {
 // فقط وضعیت توکن گیت‌هاب را برمی‌گرداند (بدون نمایش خود توکن)
 async function githubCheck(env) {
   const r = await fetch(`https://api.github.com/repos/${REPO}`, {
-    headers: { Authorization: `Bearer ${env.GITHUB_TOKEN}`, Accept: 'application/vnd.github+json', 'User-Agent': 'hasibi-content-bot' },
+    headers: { Authorization: `Bearer ${String(env.GITHUB_TOKEN || '').trim()}`, Accept: 'application/vnd.github+json', 'User-Agent': 'hasibi-content-bot' },
   });
   const exp = r.headers.get('github-authentication-token-expiration') || '';
   let push = null;
   try { push = (await r.json())?.permissions?.push ?? null; } catch {}
-  return { status: r.status, push, expires: exp };
+  const t = String(env.GITHUB_TOKEN || '');
+  // فقط نوع و طول توکن (نه خود توکن) برای عیب‌یابی
+  const kind = t.trim().startsWith('github_pat_') ? 'fine-grained' : t.trim().startsWith('ghp_') ? 'classic' : 'unknown';
+  return { status: r.status, push, expires: exp, kind, length: t.trim().length, had_spaces: t !== t.trim() };
 }
 
 async function tg(env, method, body) {
